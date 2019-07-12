@@ -35,6 +35,9 @@
 # Message adapters are lookup up via reflection by name.
 -keepclassmembers class * extends com.squareup.wire.Message { public static com.squareup.wire.ProtoAdapter ADAPTER; }
 
+# Issue fix
+-keep class com.squareup.wire.WireField$Label { *; }
+
 ### GSON
 
 # Uses sun.misc.Unsafe to allocate instances without calling their constructor.
