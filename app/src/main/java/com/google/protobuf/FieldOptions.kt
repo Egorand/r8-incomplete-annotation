@@ -10,10 +10,10 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireEnum
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.collections.List
@@ -28,8 +28,12 @@ data class FieldOptions(
    * options below.  This option is not yet implemented in the open source
    * release -- sorry, we'll try to include it in a future version!
    */
-  @field:WireField(tag = 1, adapter = "com.google.protobuf.FieldOptions.CType#ADAPTER") @JvmField
-      val ctype: CType? = CType.STRING,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.google.protobuf.FieldOptions${'$'}CType#ADAPTER"
+  )
+  @JvmField
+  val ctype: CType? = CType.STRING,
   /**
    * The packed option can be enabled for repeated primitive fields to enable
    * a more efficient representation on the wire. Rather than repeatedly
@@ -37,8 +41,12 @@ data class FieldOptions(
    * a single length-delimited blob. In proto3, only explicit setting it to
    * false will avoid using packed encoding.
    */
-  @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField val packed:
-      Boolean? = null,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val packed: Boolean? = null,
   /**
    * The jstype option determines the JavaScript type used for values of the
    * field.  The option is permitted only for 64 bit integral and fixed types
@@ -52,8 +60,12 @@ data class FieldOptions(
    * This option is an enum to permit additional types to be added, e.g.
    * goog.math.Integer.
    */
-  @field:WireField(tag = 6, adapter = "com.google.protobuf.FieldOptions.JSType#ADAPTER") @JvmField
-      val jstype: JSType? = JSType.JS_NORMAL,
+  @field:WireField(
+    tag = 6,
+    adapter = "com.google.protobuf.FieldOptions${'$'}JSType#ADAPTER"
+  )
+  @JvmField
+  val jstype: JSType? = JSType.JS_NORMAL,
   /**
    * Should this field be parsed lazily?  Lazy applies only to message-type
    * fields.  It means that when the outer message is initially parsed, the
@@ -84,26 +96,43 @@ data class FieldOptions(
    * check its required fields, regardless of whether or not the message has
    * been parsed.
    */
-  @field:WireField(tag = 5, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField val lazy:
-      Boolean? = false,
+  @field:WireField(
+    tag = 5,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val lazy: Boolean? = false,
   /**
    * Is this field deprecated?
    * Depending on the target platform, this can emit Deprecated annotations
    * for accessors, or it will be completely ignored; in the very least, this
    * is a formalization for deprecating fields.
    */
-  @field:WireField(tag = 3, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-      val deprecated: Boolean? = false,
+  @field:WireField(
+    tag = 3,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val deprecated: Boolean? = false,
   /**
    * For Google-internal migration only. Do not use.
    */
-  @field:WireField(tag = 10, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField val weak:
-      Boolean? = false,
+  @field:WireField(
+    tag = 10,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val weak: Boolean? = false,
   /**
    * The parser stores options it doesn't recognize here. See above.
    */
-  @field:WireField(tag = 999, adapter = "com.google.protobuf.UninterpretedOption#ADAPTER") @JvmField
-      val uninterpreted_option: List<UninterpretedOption> = emptyList(),
+  @field:WireField(
+    tag = 999,
+    adapter = "com.google.protobuf.UninterpretedOption#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val uninterpreted_option: List<UninterpretedOption> = emptyList(),
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<FieldOptions, FieldOptions.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -240,7 +269,7 @@ data class FieldOptions(
      * The parser stores options it doesn't recognize here. See above.
      */
     fun uninterpreted_option(uninterpreted_option: List<UninterpretedOption>): Builder {
-      Internal.checkElementsNotNull(uninterpreted_option)
+      checkElementsNotNull(uninterpreted_option)
       this.uninterpreted_option = uninterpreted_option
       return this
     }
@@ -261,7 +290,7 @@ data class FieldOptions(
     @JvmField
     val ADAPTER: ProtoAdapter<FieldOptions> = object : ProtoAdapter<FieldOptions>(
       FieldEncoding.LENGTH_DELIMITED, 
-      FieldOptions::class.java
+      FieldOptions::class
     ) {
       override fun encodedSize(value: FieldOptions): Int = 
         CType.ADAPTER.encodedSizeWithTag(1, value.ctype) +
@@ -303,7 +332,7 @@ data class FieldOptions(
             3 -> deprecated = ProtoAdapter.BOOL.decode(reader)
             10 -> weak = ProtoAdapter.BOOL.decode(reader)
             999 -> uninterpreted_option.add(UninterpretedOption.ADAPTER.decode(reader))
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return FieldOptions(
@@ -318,9 +347,9 @@ data class FieldOptions(
         )
       }
 
-      override fun redact(value: FieldOptions): FieldOptions? = value.copy(
-        uninterpreted_option = value.uninterpreted_option.also { Internal.redactElements(it,
-            UninterpretedOption.ADAPTER) },
+      override fun redact(value: FieldOptions): FieldOptions = value.copy(
+        uninterpreted_option =
+            value.uninterpreted_option.redactElements(UninterpretedOption.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }
@@ -329,7 +358,9 @@ data class FieldOptions(
     val CREATOR: Parcelable.Creator<FieldOptions> = AndroidMessage.newCreator(ADAPTER)
   }
 
-  enum class CType(private val value: Int) : WireEnum {
+  enum class CType(
+    override val value: Int
+  ) : WireEnum {
     /**
      * Default mode.
      */
@@ -339,12 +370,10 @@ data class FieldOptions(
 
     STRING_PIECE(2);
 
-    override fun getValue(): Int = value
-
     companion object {
       @JvmField
       val ADAPTER: ProtoAdapter<CType> = object : EnumAdapter<CType>(
-        CType::class.java
+        CType::class
       ) {
         override fun fromValue(value: Int): CType = CType.fromValue(value)
       }
@@ -359,7 +388,9 @@ data class FieldOptions(
     }
   }
 
-  enum class JSType(private val value: Int) : WireEnum {
+  enum class JSType(
+    override val value: Int
+  ) : WireEnum {
     /**
      * Use the default type.
      */
@@ -375,12 +406,10 @@ data class FieldOptions(
      */
     JS_NUMBER(2);
 
-    override fun getValue(): Int = value
-
     companion object {
       @JvmField
       val ADAPTER: ProtoAdapter<JSType> = object : EnumAdapter<JSType>(
-        JSType::class.java
+        JSType::class
       ) {
         override fun fromValue(value: Int): JSType = JSType.fromValue(value)
       }

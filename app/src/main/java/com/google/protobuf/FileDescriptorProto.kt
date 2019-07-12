@@ -9,9 +9,9 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Int
 import kotlin.String
 import kotlin.collections.List
@@ -25,56 +25,111 @@ data class FileDescriptorProto(
   /**
    * file name, relative to root of source tree
    */
-  @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField val name:
-      String? = null,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val name: String? = null,
   /**
    * e.g. "foo", "foo.bar", etc.
    */
-  @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val package_: String? = null,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val package_: String? = null,
   /**
    * Names of files imported by this file.
    */
-  @field:WireField(tag = 3, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val dependency: List<String> = emptyList(),
+  @field:WireField(
+    tag = 3,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val dependency: List<String> = emptyList(),
   /**
    * Indexes of the public imported files in the dependency list above.
    */
-  @field:WireField(tag = 10, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField
-      val public_dependency: List<Int> = emptyList(),
+  @field:WireField(
+    tag = 10,
+    adapter = "com.squareup.wire.ProtoAdapter#INT32",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val public_dependency: List<Int> = emptyList(),
   /**
    * Indexes of the weak imported files in the dependency list.
    * For Google-internal migration only. Do not use.
    */
-  @field:WireField(tag = 11, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField
-      val weak_dependency: List<Int> = emptyList(),
+  @field:WireField(
+    tag = 11,
+    adapter = "com.squareup.wire.ProtoAdapter#INT32",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val weak_dependency: List<Int> = emptyList(),
   /**
    * All top-level definitions in this file.
    */
-  @field:WireField(tag = 4, adapter = "com.google.protobuf.DescriptorProto#ADAPTER") @JvmField
-      val message_type: List<DescriptorProto> = emptyList(),
-  @field:WireField(tag = 5, adapter = "com.google.protobuf.EnumDescriptorProto#ADAPTER") @JvmField
-      val enum_type: List<EnumDescriptorProto> = emptyList(),
-  @field:WireField(tag = 6, adapter = "com.google.protobuf.ServiceDescriptorProto#ADAPTER")
-      @JvmField val service: List<ServiceDescriptorProto> = emptyList(),
-  @field:WireField(tag = 7, adapter = "com.google.protobuf.FieldDescriptorProto#ADAPTER") @JvmField
-      val extension: List<FieldDescriptorProto> = emptyList(),
-  @field:WireField(tag = 8, adapter = "com.google.protobuf.FileOptions#ADAPTER") @JvmField
-      val options: FileOptions? = null,
+  @field:WireField(
+    tag = 4,
+    adapter = "com.google.protobuf.DescriptorProto#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val message_type: List<DescriptorProto> = emptyList(),
+  @field:WireField(
+    tag = 5,
+    adapter = "com.google.protobuf.EnumDescriptorProto#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val enum_type: List<EnumDescriptorProto> = emptyList(),
+  @field:WireField(
+    tag = 6,
+    adapter = "com.google.protobuf.ServiceDescriptorProto#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val service: List<ServiceDescriptorProto> = emptyList(),
+  @field:WireField(
+    tag = 7,
+    adapter = "com.google.protobuf.FieldDescriptorProto#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val extension: List<FieldDescriptorProto> = emptyList(),
+  @field:WireField(
+    tag = 8,
+    adapter = "com.google.protobuf.FileOptions#ADAPTER"
+  )
+  @JvmField
+  val options: FileOptions? = null,
   /**
    * This field contains optional information about the original source code.
    * You may safely remove this entire field without harming runtime
    * functionality of the descriptors -- the information is needed only by
    * development tools.
    */
-  @field:WireField(tag = 9, adapter = "com.google.protobuf.SourceCodeInfo#ADAPTER") @JvmField
-      val source_code_info: SourceCodeInfo? = null,
+  @field:WireField(
+    tag = 9,
+    adapter = "com.google.protobuf.SourceCodeInfo#ADAPTER"
+  )
+  @JvmField
+  val source_code_info: SourceCodeInfo? = null,
   /**
    * The syntax of the proto file.
    * The supported values are "proto2" and "proto3".
    */
-  @field:WireField(tag = 12, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val syntax: String? = null,
+  @field:WireField(
+    tag = 12,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val syntax: String? = null,
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<FileDescriptorProto, FileDescriptorProto.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -152,7 +207,7 @@ data class FileDescriptorProto(
      * Names of files imported by this file.
      */
     fun dependency(dependency: List<String>): Builder {
-      Internal.checkElementsNotNull(dependency)
+      checkElementsNotNull(dependency)
       this.dependency = dependency
       return this
     }
@@ -161,7 +216,7 @@ data class FileDescriptorProto(
      * Indexes of the public imported files in the dependency list above.
      */
     fun public_dependency(public_dependency: List<Int>): Builder {
-      Internal.checkElementsNotNull(public_dependency)
+      checkElementsNotNull(public_dependency)
       this.public_dependency = public_dependency
       return this
     }
@@ -171,7 +226,7 @@ data class FileDescriptorProto(
      * For Google-internal migration only. Do not use.
      */
     fun weak_dependency(weak_dependency: List<Int>): Builder {
-      Internal.checkElementsNotNull(weak_dependency)
+      checkElementsNotNull(weak_dependency)
       this.weak_dependency = weak_dependency
       return this
     }
@@ -180,25 +235,25 @@ data class FileDescriptorProto(
      * All top-level definitions in this file.
      */
     fun message_type(message_type: List<DescriptorProto>): Builder {
-      Internal.checkElementsNotNull(message_type)
+      checkElementsNotNull(message_type)
       this.message_type = message_type
       return this
     }
 
     fun enum_type(enum_type: List<EnumDescriptorProto>): Builder {
-      Internal.checkElementsNotNull(enum_type)
+      checkElementsNotNull(enum_type)
       this.enum_type = enum_type
       return this
     }
 
     fun service(service: List<ServiceDescriptorProto>): Builder {
-      Internal.checkElementsNotNull(service)
+      checkElementsNotNull(service)
       this.service = service
       return this
     }
 
     fun extension(extension: List<FieldDescriptorProto>): Builder {
-      Internal.checkElementsNotNull(extension)
+      checkElementsNotNull(extension)
       this.extension = extension
       return this
     }
@@ -249,7 +304,7 @@ data class FileDescriptorProto(
     @JvmField
     val ADAPTER: ProtoAdapter<FileDescriptorProto> = object : ProtoAdapter<FileDescriptorProto>(
       FieldEncoding.LENGTH_DELIMITED, 
-      FileDescriptorProto::class.java
+      FileDescriptorProto::class
     ) {
       override fun encodedSize(value: FileDescriptorProto): Int = 
         ProtoAdapter.STRING.encodedSizeWithTag(1, value.name) +
@@ -309,7 +364,7 @@ data class FileDescriptorProto(
             8 -> options = FileOptions.ADAPTER.decode(reader)
             9 -> source_code_info = SourceCodeInfo.ADAPTER.decode(reader)
             12 -> syntax = ProtoAdapter.STRING.decode(reader)
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return FileDescriptorProto(
@@ -329,15 +384,11 @@ data class FileDescriptorProto(
         )
       }
 
-      override fun redact(value: FileDescriptorProto): FileDescriptorProto? = value.copy(
-        message_type = value.message_type.also { Internal.redactElements(it,
-            DescriptorProto.ADAPTER) },
-        enum_type = value.enum_type.also { Internal.redactElements(it, EnumDescriptorProto.ADAPTER)
-            },
-        service = value.service.also { Internal.redactElements(it, ServiceDescriptorProto.ADAPTER)
-            },
-        extension = value.extension.also { Internal.redactElements(it, FieldDescriptorProto.ADAPTER)
-            },
+      override fun redact(value: FileDescriptorProto): FileDescriptorProto = value.copy(
+        message_type = value.message_type.redactElements(DescriptorProto.ADAPTER),
+        enum_type = value.enum_type.redactElements(EnumDescriptorProto.ADAPTER),
+        service = value.service.redactElements(ServiceDescriptorProto.ADAPTER),
+        extension = value.extension.redactElements(FieldDescriptorProto.ADAPTER),
         options = value.options?.let(FileOptions.ADAPTER::redact),
         source_code_info = value.source_code_info?.let(SourceCodeInfo.ADAPTER::redact),
         unknownFields = ByteString.EMPTY

@@ -9,7 +9,6 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
 import kotlin.Int
 import kotlin.String
@@ -20,12 +19,24 @@ import okio.ByteString
  * Describes a value within an enum.
  */
 data class EnumValueDescriptorProto(
-  @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField val name:
-      String? = null,
-  @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField val number:
-      Int? = null,
-  @field:WireField(tag = 3, adapter = "com.google.protobuf.EnumValueOptions#ADAPTER") @JvmField
-      val options: EnumValueOptions? = null,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val name: String? = null,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.squareup.wire.ProtoAdapter#INT32"
+  )
+  @JvmField
+  val number: Int? = null,
+  @field:WireField(
+    tag = 3,
+    adapter = "com.google.protobuf.EnumValueOptions#ADAPTER"
+  )
+  @JvmField
+  val options: EnumValueOptions? = null,
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<EnumValueDescriptorProto, EnumValueDescriptorProto.Builder>(ADAPTER,
     unknownFields) {
@@ -76,7 +87,7 @@ data class EnumValueDescriptorProto(
     val ADAPTER: ProtoAdapter<EnumValueDescriptorProto> = object :
         ProtoAdapter<EnumValueDescriptorProto>(
       FieldEncoding.LENGTH_DELIMITED, 
-      EnumValueDescriptorProto::class.java
+      EnumValueDescriptorProto::class
     ) {
       override fun encodedSize(value: EnumValueDescriptorProto): Int = 
         ProtoAdapter.STRING.encodedSizeWithTag(1, value.name) +
@@ -100,7 +111,7 @@ data class EnumValueDescriptorProto(
             1 -> name = ProtoAdapter.STRING.decode(reader)
             2 -> number = ProtoAdapter.INT32.decode(reader)
             3 -> options = EnumValueOptions.ADAPTER.decode(reader)
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return EnumValueDescriptorProto(
@@ -111,7 +122,7 @@ data class EnumValueDescriptorProto(
         )
       }
 
-      override fun redact(value: EnumValueDescriptorProto): EnumValueDescriptorProto? = value.copy(
+      override fun redact(value: EnumValueDescriptorProto): EnumValueDescriptorProto = value.copy(
         options = value.options?.let(EnumValueOptions.ADAPTER::redact),
         unknownFields = ByteString.EMPTY
       )

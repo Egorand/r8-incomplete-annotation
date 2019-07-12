@@ -10,10 +10,10 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireEnum
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.collections.List
@@ -32,15 +32,28 @@ data class MethodOptions(
    * for the method, or it will be completely ignored; in the very least,
    * this is a formalization for deprecating methods.
    */
-  @field:WireField(tag = 33, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-      val deprecated: Boolean? = false,
-  @field:WireField(tag = 34, adapter = "com.google.protobuf.MethodOptions.IdempotencyLevel#ADAPTER")
-      @JvmField val idempotency_level: IdempotencyLevel? = IdempotencyLevel.IDEMPOTENCY_UNKNOWN,
+  @field:WireField(
+    tag = 33,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val deprecated: Boolean? = false,
+  @field:WireField(
+    tag = 34,
+    adapter = "com.google.protobuf.MethodOptions${'$'}IdempotencyLevel#ADAPTER"
+  )
+  @JvmField
+  val idempotency_level: IdempotencyLevel? = IdempotencyLevel.IDEMPOTENCY_UNKNOWN,
   /**
    * The parser stores options it doesn't recognize here. See above.
    */
-  @field:WireField(tag = 999, adapter = "com.google.protobuf.UninterpretedOption#ADAPTER") @JvmField
-      val uninterpreted_option: List<UninterpretedOption> = emptyList(),
+  @field:WireField(
+    tag = 999,
+    adapter = "com.google.protobuf.UninterpretedOption#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val uninterpreted_option: List<UninterpretedOption> = emptyList(),
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<MethodOptions, MethodOptions.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -86,7 +99,7 @@ data class MethodOptions(
      * The parser stores options it doesn't recognize here. See above.
      */
     fun uninterpreted_option(uninterpreted_option: List<UninterpretedOption>): Builder {
-      Internal.checkElementsNotNull(uninterpreted_option)
+      checkElementsNotNull(uninterpreted_option)
       this.uninterpreted_option = uninterpreted_option
       return this
     }
@@ -103,7 +116,7 @@ data class MethodOptions(
     @JvmField
     val ADAPTER: ProtoAdapter<MethodOptions> = object : ProtoAdapter<MethodOptions>(
       FieldEncoding.LENGTH_DELIMITED, 
-      MethodOptions::class.java
+      MethodOptions::class
     ) {
       override fun encodedSize(value: MethodOptions): Int = 
         ProtoAdapter.BOOL.encodedSizeWithTag(33, value.deprecated) +
@@ -129,7 +142,7 @@ data class MethodOptions(
             33 -> deprecated = ProtoAdapter.BOOL.decode(reader)
             34 -> idempotency_level = IdempotencyLevel.ADAPTER.decode(reader)
             999 -> uninterpreted_option.add(UninterpretedOption.ADAPTER.decode(reader))
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return MethodOptions(
@@ -140,9 +153,9 @@ data class MethodOptions(
         )
       }
 
-      override fun redact(value: MethodOptions): MethodOptions? = value.copy(
-        uninterpreted_option = value.uninterpreted_option.also { Internal.redactElements(it,
-            UninterpretedOption.ADAPTER) },
+      override fun redact(value: MethodOptions): MethodOptions = value.copy(
+        uninterpreted_option =
+            value.uninterpreted_option.redactElements(UninterpretedOption.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }
@@ -156,7 +169,9 @@ data class MethodOptions(
    * or neither? HTTP based RPC implementation may choose GET verb for safe
    * methods, and PUT verb for idempotent methods instead of the default POST.
    */
-  enum class IdempotencyLevel(private val value: Int) : WireEnum {
+  enum class IdempotencyLevel(
+    override val value: Int
+  ) : WireEnum {
     IDEMPOTENCY_UNKNOWN(0),
 
     /**
@@ -169,12 +184,10 @@ data class MethodOptions(
      */
     IDEMPOTENT(2);
 
-    override fun getValue(): Int = value
-
     companion object {
       @JvmField
       val ADAPTER: ProtoAdapter<IdempotencyLevel> = object : EnumAdapter<IdempotencyLevel>(
-        IdempotencyLevel::class.java
+        IdempotencyLevel::class
       ) {
         override fun fromValue(value: Int): IdempotencyLevel = IdempotencyLevel.fromValue(value)
       }

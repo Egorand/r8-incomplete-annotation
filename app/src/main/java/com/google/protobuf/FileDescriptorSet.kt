@@ -9,9 +9,9 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Int
 import kotlin.collections.List
 import kotlin.jvm.JvmField
@@ -21,10 +21,16 @@ import okio.ByteString
  * The protocol compiler can output a FileDescriptorSet containing the .proto
  * files it parses.
  */
-data class FileDescriptorSet(@field:WireField(tag = 1, adapter =
-    "com.google.protobuf.FileDescriptorProto#ADAPTER") @JvmField val file: List<FileDescriptorProto>
-    = emptyList(), val unknownFields: ByteString = ByteString.EMPTY) :
-    AndroidMessage<FileDescriptorSet, FileDescriptorSet.Builder>(ADAPTER, unknownFields) {
+data class FileDescriptorSet(
+  @field:WireField(
+    tag = 1,
+    adapter = "com.google.protobuf.FileDescriptorProto#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val file: List<FileDescriptorProto> = emptyList(),
+  val unknownFields: ByteString = ByteString.EMPTY
+) : AndroidMessage<FileDescriptorSet, FileDescriptorSet.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
     val builder = Builder()
     builder.file = file
@@ -37,7 +43,7 @@ data class FileDescriptorSet(@field:WireField(tag = 1, adapter =
     var file: List<FileDescriptorProto> = emptyList()
 
     fun file(file: List<FileDescriptorProto>): Builder {
-      Internal.checkElementsNotNull(file)
+      checkElementsNotNull(file)
       this.file = file
       return this
     }
@@ -52,7 +58,7 @@ data class FileDescriptorSet(@field:WireField(tag = 1, adapter =
     @JvmField
     val ADAPTER: ProtoAdapter<FileDescriptorSet> = object : ProtoAdapter<FileDescriptorSet>(
       FieldEncoding.LENGTH_DELIMITED, 
-      FileDescriptorSet::class.java
+      FileDescriptorSet::class
     ) {
       override fun encodedSize(value: FileDescriptorSet): Int = 
         FileDescriptorProto.ADAPTER.asRepeated().encodedSizeWithTag(1, value.file) +
@@ -68,7 +74,7 @@ data class FileDescriptorSet(@field:WireField(tag = 1, adapter =
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
             1 -> file.add(FileDescriptorProto.ADAPTER.decode(reader))
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return FileDescriptorSet(
@@ -77,8 +83,8 @@ data class FileDescriptorSet(@field:WireField(tag = 1, adapter =
         )
       }
 
-      override fun redact(value: FileDescriptorSet): FileDescriptorSet? = value.copy(
-        file = value.file.also { Internal.redactElements(it, FileDescriptorProto.ADAPTER) },
+      override fun redact(value: FileDescriptorSet): FileDescriptorSet = value.copy(
+        file = value.file.redactElements(FileDescriptorProto.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }

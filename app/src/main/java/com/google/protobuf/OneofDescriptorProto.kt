@@ -9,7 +9,6 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
 import kotlin.Int
 import kotlin.String
@@ -20,10 +19,18 @@ import okio.ByteString
  * Describes a oneof.
  */
 data class OneofDescriptorProto(
-  @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField val name:
-      String? = null,
-  @field:WireField(tag = 2, adapter = "com.google.protobuf.OneofOptions#ADAPTER") @JvmField
-      val options: OneofOptions? = null,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val name: String? = null,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.google.protobuf.OneofOptions#ADAPTER"
+  )
+  @JvmField
+  val options: OneofOptions? = null,
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<OneofDescriptorProto, OneofDescriptorProto.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -62,7 +69,7 @@ data class OneofDescriptorProto(
     @JvmField
     val ADAPTER: ProtoAdapter<OneofDescriptorProto> = object : ProtoAdapter<OneofDescriptorProto>(
       FieldEncoding.LENGTH_DELIMITED, 
-      OneofDescriptorProto::class.java
+      OneofDescriptorProto::class
     ) {
       override fun encodedSize(value: OneofDescriptorProto): Int = 
         ProtoAdapter.STRING.encodedSizeWithTag(1, value.name) +
@@ -82,7 +89,7 @@ data class OneofDescriptorProto(
           when (tag) {
             1 -> name = ProtoAdapter.STRING.decode(reader)
             2 -> options = OneofOptions.ADAPTER.decode(reader)
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return OneofDescriptorProto(
@@ -92,7 +99,7 @@ data class OneofDescriptorProto(
         )
       }
 
-      override fun redact(value: OneofDescriptorProto): OneofDescriptorProto? = value.copy(
+      override fun redact(value: OneofDescriptorProto): OneofDescriptorProto = value.copy(
         options = value.options?.let(OneofOptions.ADAPTER::redact),
         unknownFields = ByteString.EMPTY
       )

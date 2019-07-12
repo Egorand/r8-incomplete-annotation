@@ -10,7 +10,6 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireEnum
 import com.squareup.wire.WireField
 import kotlin.Int
@@ -23,18 +22,34 @@ import okio.ByteString
  * Describes a field within a message.
  */
 data class FieldDescriptorProto(
-  @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField val name:
-      String? = null,
-  @field:WireField(tag = 3, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField val number:
-      Int? = null,
-  @field:WireField(tag = 4, adapter = "com.google.protobuf.FieldDescriptorProto.Label#ADAPTER")
-      @JvmField val label: Label? = null,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val name: String? = null,
+  @field:WireField(
+    tag = 3,
+    adapter = "com.squareup.wire.ProtoAdapter#INT32"
+  )
+  @JvmField
+  val number: Int? = null,
+  @field:WireField(
+    tag = 4,
+    adapter = "com.google.protobuf.FieldDescriptorProto${'$'}Label#ADAPTER"
+  )
+  @JvmField
+  val label: Label? = null,
   /**
    * If type_name is set, this need not be set.  If both this and type_name
    * are set, this must be one of TYPE_ENUM, TYPE_MESSAGE or TYPE_GROUP.
    */
-  @field:WireField(tag = 5, adapter = "com.google.protobuf.FieldDescriptorProto.Type#ADAPTER")
-      @JvmField val type: Type? = null,
+  @field:WireField(
+    tag = 5,
+    adapter = "com.google.protobuf.FieldDescriptorProto${'$'}Type#ADAPTER"
+  )
+  @JvmField
+  val type: Type? = null,
   /**
    * For message and enum types, this is the name of the type.  If the name
    * starts with a '.', it is fully-qualified.  Otherwise, C++-like scoping
@@ -42,14 +57,22 @@ data class FieldDescriptorProto(
    * message are searched, then within the parent, on up to the root
    * namespace).
    */
-  @field:WireField(tag = 6, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val type_name: String? = null,
+  @field:WireField(
+    tag = 6,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val type_name: String? = null,
   /**
    * For extensions, this is the name of the type being extended.  It is
    * resolved in the same manner as type_name.
    */
-  @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val extendee: String? = null,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val extendee: String? = null,
   /**
    * For numeric types, contains the original text representation of the value.
    * For booleans, "true" or "false".
@@ -57,24 +80,40 @@ data class FieldDescriptorProto(
    * For bytes, contains the C escaped value.  All bytes >= 128 are escaped.
    * TODO(kenton):  Base-64 encode?
    */
-  @field:WireField(tag = 7, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val default_value: String? = null,
+  @field:WireField(
+    tag = 7,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val default_value: String? = null,
   /**
    * If set, gives the index of a oneof in the containing type's oneof_decl
    * list.  This field is a member of that oneof.
    */
-  @field:WireField(tag = 9, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField
-      val oneof_index: Int? = null,
+  @field:WireField(
+    tag = 9,
+    adapter = "com.squareup.wire.ProtoAdapter#INT32"
+  )
+  @JvmField
+  val oneof_index: Int? = null,
   /**
    * JSON name of this field. The value is set by protocol compiler. If the
    * user has set a "json_name" option on this field, that option's value
    * will be used. Otherwise, it's deduced from the field's name by converting
    * it to camelCase.
    */
-  @field:WireField(tag = 10, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val json_name: String? = null,
-  @field:WireField(tag = 8, adapter = "com.google.protobuf.FieldOptions#ADAPTER") @JvmField
-      val options: FieldOptions? = null,
+  @field:WireField(
+    tag = 10,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val json_name: String? = null,
+  @field:WireField(
+    tag = 8,
+    adapter = "com.google.protobuf.FieldOptions#ADAPTER"
+  )
+  @JvmField
+  val options: FieldOptions? = null,
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<FieldDescriptorProto, FieldDescriptorProto.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -225,7 +264,7 @@ data class FieldDescriptorProto(
     @JvmField
     val ADAPTER: ProtoAdapter<FieldDescriptorProto> = object : ProtoAdapter<FieldDescriptorProto>(
       FieldEncoding.LENGTH_DELIMITED, 
-      FieldDescriptorProto::class.java
+      FieldDescriptorProto::class
     ) {
       override fun encodedSize(value: FieldDescriptorProto): Int = 
         ProtoAdapter.STRING.encodedSizeWithTag(1, value.name) +
@@ -277,7 +316,7 @@ data class FieldDescriptorProto(
             9 -> oneof_index = ProtoAdapter.INT32.decode(reader)
             10 -> json_name = ProtoAdapter.STRING.decode(reader)
             8 -> options = FieldOptions.ADAPTER.decode(reader)
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return FieldDescriptorProto(
@@ -295,7 +334,7 @@ data class FieldDescriptorProto(
         )
       }
 
-      override fun redact(value: FieldDescriptorProto): FieldDescriptorProto? = value.copy(
+      override fun redact(value: FieldDescriptorProto): FieldDescriptorProto = value.copy(
         options = value.options?.let(FieldOptions.ADAPTER::redact),
         unknownFields = ByteString.EMPTY
       )
@@ -305,7 +344,9 @@ data class FieldDescriptorProto(
     val CREATOR: Parcelable.Creator<FieldDescriptorProto> = AndroidMessage.newCreator(ADAPTER)
   }
 
-  enum class Type(private val value: Int) : WireEnum {
+  enum class Type(
+    override val value: Int
+  ) : WireEnum {
     /**
      * 0 is reserved for errors.
      * Order is weird for historical reasons.
@@ -372,12 +413,10 @@ data class FieldDescriptorProto(
      */
     TYPE_SINT64(18);
 
-    override fun getValue(): Int = value
-
     companion object {
       @JvmField
       val ADAPTER: ProtoAdapter<Type> = object : EnumAdapter<Type>(
-        Type::class.java
+        Type::class
       ) {
         override fun fromValue(value: Int): Type = Type.fromValue(value)
       }
@@ -407,7 +446,9 @@ data class FieldDescriptorProto(
     }
   }
 
-  enum class Label(private val value: Int) : WireEnum {
+  enum class Label(
+    override val value: Int
+  ) : WireEnum {
     /**
      * 0 is reserved for errors
      */
@@ -417,12 +458,10 @@ data class FieldDescriptorProto(
 
     LABEL_REPEATED(3);
 
-    override fun getValue(): Int = value
-
     companion object {
       @JvmField
       val ADAPTER: ProtoAdapter<Label> = object : EnumAdapter<Label>(
-        Label::class.java
+        Label::class
       ) {
         override fun fromValue(value: Int): Label = Label.fromValue(value)
       }

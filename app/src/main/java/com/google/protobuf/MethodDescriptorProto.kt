@@ -9,7 +9,6 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
 import kotlin.Boolean
 import kotlin.Int
@@ -21,28 +20,52 @@ import okio.ByteString
  * Describes a method of a service.
  */
 data class MethodDescriptorProto(
-  @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField val name:
-      String? = null,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val name: String? = null,
   /**
    * Input and output type names.  These are resolved in the same way as
    * FieldDescriptorProto.type_name, but must refer to a message type.
    */
-  @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val input_type: String? = null,
-  @field:WireField(tag = 3, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val output_type: String? = null,
-  @field:WireField(tag = 4, adapter = "com.google.protobuf.MethodOptions#ADAPTER") @JvmField
-      val options: MethodOptions? = null,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val input_type: String? = null,
+  @field:WireField(
+    tag = 3,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val output_type: String? = null,
+  @field:WireField(
+    tag = 4,
+    adapter = "com.google.protobuf.MethodOptions#ADAPTER"
+  )
+  @JvmField
+  val options: MethodOptions? = null,
   /**
    * Identifies if client streams multiple client messages
    */
-  @field:WireField(tag = 5, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-      val client_streaming: Boolean? = false,
+  @field:WireField(
+    tag = 5,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val client_streaming: Boolean? = false,
   /**
    * Identifies if server streams multiple server messages
    */
-  @field:WireField(tag = 6, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-      val server_streaming: Boolean? = false,
+  @field:WireField(
+    tag = 6,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val server_streaming: Boolean? = false,
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<MethodDescriptorProto, MethodDescriptorProto.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -131,7 +154,7 @@ data class MethodDescriptorProto(
     @JvmField
     val ADAPTER: ProtoAdapter<MethodDescriptorProto> = object : ProtoAdapter<MethodDescriptorProto>(
       FieldEncoding.LENGTH_DELIMITED, 
-      MethodDescriptorProto::class.java
+      MethodDescriptorProto::class
     ) {
       override fun encodedSize(value: MethodDescriptorProto): Int = 
         ProtoAdapter.STRING.encodedSizeWithTag(1, value.name) +
@@ -167,7 +190,7 @@ data class MethodDescriptorProto(
             4 -> options = MethodOptions.ADAPTER.decode(reader)
             5 -> client_streaming = ProtoAdapter.BOOL.decode(reader)
             6 -> server_streaming = ProtoAdapter.BOOL.decode(reader)
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return MethodDescriptorProto(
@@ -181,7 +204,7 @@ data class MethodDescriptorProto(
         )
       }
 
-      override fun redact(value: MethodDescriptorProto): MethodDescriptorProto? = value.copy(
+      override fun redact(value: MethodDescriptorProto): MethodDescriptorProto = value.copy(
         options = value.options?.let(MethodOptions.ADAPTER::redact),
         unknownFields = ByteString.EMPTY
       )

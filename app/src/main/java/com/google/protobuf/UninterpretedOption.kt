@@ -9,9 +9,10 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.missingRequiredFields
+import com.squareup.wire.internal.redactElements
 import kotlin.Boolean
 import kotlin.Double
 import kotlin.Int
@@ -30,24 +31,53 @@ import okio.ByteString
  * in them.
  */
 data class UninterpretedOption(
-  @field:WireField(tag = 2, adapter = "com.google.protobuf.UninterpretedOption.NamePart#ADAPTER")
-      @JvmField val name: List<NamePart> = emptyList(),
+  @field:WireField(
+    tag = 2,
+    adapter = "com.google.protobuf.UninterpretedOption${'$'}NamePart#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val name: List<NamePart> = emptyList(),
   /**
    * The value of the uninterpreted option, in whatever type the tokenizer
    * identified it as during parsing. Exactly one of these should be set.
    */
-  @field:WireField(tag = 3, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val identifier_value: String? = null,
-  @field:WireField(tag = 4, adapter = "com.squareup.wire.ProtoAdapter#UINT64") @JvmField
-      val positive_int_value: Long? = null,
-  @field:WireField(tag = 5, adapter = "com.squareup.wire.ProtoAdapter#INT64") @JvmField
-      val negative_int_value: Long? = null,
-  @field:WireField(tag = 6, adapter = "com.squareup.wire.ProtoAdapter#DOUBLE") @JvmField
-      val double_value: Double? = null,
-  @field:WireField(tag = 7, adapter = "com.squareup.wire.ProtoAdapter#BYTES") @JvmField
-      val string_value: ByteString? = null,
-  @field:WireField(tag = 8, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val aggregate_value: String? = null,
+  @field:WireField(
+    tag = 3,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val identifier_value: String? = null,
+  @field:WireField(
+    tag = 4,
+    adapter = "com.squareup.wire.ProtoAdapter#UINT64"
+  )
+  @JvmField
+  val positive_int_value: Long? = null,
+  @field:WireField(
+    tag = 5,
+    adapter = "com.squareup.wire.ProtoAdapter#INT64"
+  )
+  @JvmField
+  val negative_int_value: Long? = null,
+  @field:WireField(
+    tag = 6,
+    adapter = "com.squareup.wire.ProtoAdapter#DOUBLE"
+  )
+  @JvmField
+  val double_value: Double? = null,
+  @field:WireField(
+    tag = 7,
+    adapter = "com.squareup.wire.ProtoAdapter#BYTES"
+  )
+  @JvmField
+  val string_value: ByteString? = null,
+  @field:WireField(
+    tag = 8,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val aggregate_value: String? = null,
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<UninterpretedOption, UninterpretedOption.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -86,7 +116,7 @@ data class UninterpretedOption(
     var aggregate_value: String? = null
 
     fun name(name: List<NamePart>): Builder {
-      Internal.checkElementsNotNull(name)
+      checkElementsNotNull(name)
       this.name = name
       return this
     }
@@ -141,7 +171,7 @@ data class UninterpretedOption(
     @JvmField
     val ADAPTER: ProtoAdapter<UninterpretedOption> = object : ProtoAdapter<UninterpretedOption>(
       FieldEncoding.LENGTH_DELIMITED, 
-      UninterpretedOption::class.java
+      UninterpretedOption::class
     ) {
       override fun encodedSize(value: UninterpretedOption): Int = 
         NamePart.ADAPTER.asRepeated().encodedSizeWithTag(2, value.name) +
@@ -181,7 +211,7 @@ data class UninterpretedOption(
             6 -> double_value = ProtoAdapter.DOUBLE.decode(reader)
             7 -> string_value = ProtoAdapter.BYTES.decode(reader)
             8 -> aggregate_value = ProtoAdapter.STRING.decode(reader)
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return UninterpretedOption(
@@ -196,8 +226,8 @@ data class UninterpretedOption(
         )
       }
 
-      override fun redact(value: UninterpretedOption): UninterpretedOption? = value.copy(
-        name = value.name.also { Internal.redactElements(it, NamePart.ADAPTER) },
+      override fun redact(value: UninterpretedOption): UninterpretedOption = value.copy(
+        name = value.name.redactElements(NamePart.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }
@@ -214,10 +244,20 @@ data class UninterpretedOption(
    * "foo.(bar.baz).qux".
    */
   data class NamePart(
-    @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-        val name_part: String,
-    @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-        val is_extension: Boolean,
+    @field:WireField(
+      tag = 1,
+      adapter = "com.squareup.wire.ProtoAdapter#STRING",
+      label = WireField.Label.REQUIRED
+    )
+    @JvmField
+    val name_part: String,
+    @field:WireField(
+      tag = 2,
+      adapter = "com.squareup.wire.ProtoAdapter#BOOL",
+      label = WireField.Label.REQUIRED
+    )
+    @JvmField
+    val is_extension: Boolean,
     val unknownFields: ByteString = ByteString.EMPTY
   ) : AndroidMessage<NamePart, NamePart.Builder>(ADAPTER, unknownFields) {
     override fun newBuilder(): Builder {
@@ -246,9 +286,8 @@ data class UninterpretedOption(
       }
 
       override fun build(): NamePart = NamePart(
-        name_part = name_part ?: throw Internal.missingRequiredFields(name_part, "name_part"),
-        is_extension = is_extension ?: throw Internal.missingRequiredFields(is_extension,
-            "is_extension"),
+        name_part = name_part ?: throw missingRequiredFields(name_part, "name_part"),
+        is_extension = is_extension ?: throw missingRequiredFields(is_extension, "is_extension"),
         unknownFields = buildUnknownFields()
       )
     }
@@ -257,7 +296,7 @@ data class UninterpretedOption(
       @JvmField
       val ADAPTER: ProtoAdapter<NamePart> = object : ProtoAdapter<NamePart>(
         FieldEncoding.LENGTH_DELIMITED, 
-        NamePart::class.java
+        NamePart::class
       ) {
         override fun encodedSize(value: NamePart): Int = 
           ProtoAdapter.STRING.encodedSizeWithTag(1, value.name_part) +
@@ -277,18 +316,18 @@ data class UninterpretedOption(
             when (tag) {
               1 -> name_part = ProtoAdapter.STRING.decode(reader)
               2 -> is_extension = ProtoAdapter.BOOL.decode(reader)
-              else -> TagHandler.UNKNOWN_TAG
+              else -> reader.readUnknownField(tag)
             }
           }
           return NamePart(
-            name_part = name_part ?: throw Internal.missingRequiredFields(name_part, "name_part"),
-            is_extension = is_extension ?: throw Internal.missingRequiredFields(is_extension,
+            name_part = name_part ?: throw missingRequiredFields(name_part, "name_part"),
+            is_extension = is_extension ?: throw missingRequiredFields(is_extension,
                 "is_extension"),
             unknownFields = unknownFields
           )
         }
 
-        override fun redact(value: NamePart): NamePart? = value.copy(
+        override fun redact(value: NamePart): NamePart = value.copy(
           unknownFields = ByteString.EMPTY
         )
       }

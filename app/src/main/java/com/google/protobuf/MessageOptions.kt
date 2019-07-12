@@ -9,9 +9,9 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.collections.List
@@ -39,23 +39,35 @@ data class MessageOptions(
    * Because this is an option, the above two restrictions are not enforced by
    * the protocol compiler.
    */
-  @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-      val message_set_wire_format: Boolean? = false,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val message_set_wire_format: Boolean? = false,
   /**
    * Disables the generation of the standard "descriptor()" accessor, which can
    * conflict with a field of the same name.  This is meant to make migration
    * from proto1 easier; new code should avoid fields named "descriptor".
    */
-  @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-      val no_standard_descriptor_accessor: Boolean? = false,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val no_standard_descriptor_accessor: Boolean? = false,
   /**
    * Is this message deprecated?
    * Depending on the target platform, this can emit Deprecated annotations
    * for the message, or it will be completely ignored; in the very least,
    * this is a formalization for deprecating messages.
    */
-  @field:WireField(tag = 3, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-      val deprecated: Boolean? = false,
+  @field:WireField(
+    tag = 3,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val deprecated: Boolean? = false,
   /**
    * Whether the message is an automatically generated map entry type for the
    * maps field.
@@ -79,14 +91,23 @@ data class MessageOptions(
    * instead. The option should only be implicitly set by the proto compiler
    * parser.
    */
-  @field:WireField(tag = 7, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-      val map_entry: Boolean? = null,
+  @field:WireField(
+    tag = 7,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val map_entry: Boolean? = null,
   /**
    * javanano_as_lite
    * The parser stores options it doesn't recognize here. See above.
    */
-  @field:WireField(tag = 999, adapter = "com.google.protobuf.UninterpretedOption#ADAPTER") @JvmField
-      val uninterpreted_option: List<UninterpretedOption> = emptyList(),
+  @field:WireField(
+    tag = 999,
+    adapter = "com.google.protobuf.UninterpretedOption#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val uninterpreted_option: List<UninterpretedOption> = emptyList(),
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<MessageOptions, MessageOptions.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -195,7 +216,7 @@ data class MessageOptions(
      * The parser stores options it doesn't recognize here. See above.
      */
     fun uninterpreted_option(uninterpreted_option: List<UninterpretedOption>): Builder {
-      Internal.checkElementsNotNull(uninterpreted_option)
+      checkElementsNotNull(uninterpreted_option)
       this.uninterpreted_option = uninterpreted_option
       return this
     }
@@ -214,7 +235,7 @@ data class MessageOptions(
     @JvmField
     val ADAPTER: ProtoAdapter<MessageOptions> = object : ProtoAdapter<MessageOptions>(
       FieldEncoding.LENGTH_DELIMITED, 
-      MessageOptions::class.java
+      MessageOptions::class
     ) {
       override fun encodedSize(value: MessageOptions): Int = 
         ProtoAdapter.BOOL.encodedSizeWithTag(1, value.message_set_wire_format) +
@@ -248,7 +269,7 @@ data class MessageOptions(
             3 -> deprecated = ProtoAdapter.BOOL.decode(reader)
             7 -> map_entry = ProtoAdapter.BOOL.decode(reader)
             999 -> uninterpreted_option.add(UninterpretedOption.ADAPTER.decode(reader))
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return MessageOptions(
@@ -261,9 +282,9 @@ data class MessageOptions(
         )
       }
 
-      override fun redact(value: MessageOptions): MessageOptions? = value.copy(
-        uninterpreted_option = value.uninterpreted_option.also { Internal.redactElements(it,
-            UninterpretedOption.ADAPTER) },
+      override fun redact(value: MessageOptions): MessageOptions = value.copy(
+        uninterpreted_option =
+            value.uninterpreted_option.redactElements(UninterpretedOption.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }

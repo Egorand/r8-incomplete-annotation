@@ -9,9 +9,9 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Int
 import kotlin.String
 import kotlin.collections.List
@@ -22,26 +22,48 @@ import okio.ByteString
  * Describes an enum type.
  */
 data class EnumDescriptorProto(
-  @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField val name:
-      String? = null,
-  @field:WireField(tag = 2, adapter = "com.google.protobuf.EnumValueDescriptorProto#ADAPTER")
-      @JvmField val value: List<EnumValueDescriptorProto> = emptyList(),
-  @field:WireField(tag = 3, adapter = "com.google.protobuf.EnumOptions#ADAPTER") @JvmField
-      val options: EnumOptions? = null,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val name: String? = null,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.google.protobuf.EnumValueDescriptorProto#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val value: List<EnumValueDescriptorProto> = emptyList(),
+  @field:WireField(
+    tag = 3,
+    adapter = "com.google.protobuf.EnumOptions#ADAPTER"
+  )
+  @JvmField
+  val options: EnumOptions? = null,
   /**
    * Range of reserved numeric values. Reserved numeric values may not be used
    * by enum values in the same enum declaration. Reserved ranges may not
    * overlap.
    */
-  @field:WireField(tag = 4, adapter =
-      "com.google.protobuf.EnumDescriptorProto.EnumReservedRange#ADAPTER") @JvmField
-      val reserved_range: List<EnumReservedRange> = emptyList(),
+  @field:WireField(
+    tag = 4,
+    adapter = "com.google.protobuf.EnumDescriptorProto${'$'}EnumReservedRange#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val reserved_range: List<EnumReservedRange> = emptyList(),
   /**
    * Reserved enum value names, which may not be reused. A given name may only
    * be reserved once.
    */
-  @field:WireField(tag = 5, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-      val reserved_name: List<String> = emptyList(),
+  @field:WireField(
+    tag = 5,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val reserved_name: List<String> = emptyList(),
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<EnumDescriptorProto, EnumDescriptorProto.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -77,7 +99,7 @@ data class EnumDescriptorProto(
     }
 
     fun value(value: List<EnumValueDescriptorProto>): Builder {
-      Internal.checkElementsNotNull(value)
+      checkElementsNotNull(value)
       this.value = value
       return this
     }
@@ -93,7 +115,7 @@ data class EnumDescriptorProto(
      * overlap.
      */
     fun reserved_range(reserved_range: List<EnumReservedRange>): Builder {
-      Internal.checkElementsNotNull(reserved_range)
+      checkElementsNotNull(reserved_range)
       this.reserved_range = reserved_range
       return this
     }
@@ -103,7 +125,7 @@ data class EnumDescriptorProto(
      * be reserved once.
      */
     fun reserved_name(reserved_name: List<String>): Builder {
-      Internal.checkElementsNotNull(reserved_name)
+      checkElementsNotNull(reserved_name)
       this.reserved_name = reserved_name
       return this
     }
@@ -122,7 +144,7 @@ data class EnumDescriptorProto(
     @JvmField
     val ADAPTER: ProtoAdapter<EnumDescriptorProto> = object : ProtoAdapter<EnumDescriptorProto>(
       FieldEncoding.LENGTH_DELIMITED, 
-      EnumDescriptorProto::class.java
+      EnumDescriptorProto::class
     ) {
       override fun encodedSize(value: EnumDescriptorProto): Int = 
         ProtoAdapter.STRING.encodedSizeWithTag(1, value.name) +
@@ -154,7 +176,7 @@ data class EnumDescriptorProto(
             3 -> options = EnumOptions.ADAPTER.decode(reader)
             4 -> reserved_range.add(EnumReservedRange.ADAPTER.decode(reader))
             5 -> reserved_name.add(ProtoAdapter.STRING.decode(reader))
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return EnumDescriptorProto(
@@ -167,11 +189,10 @@ data class EnumDescriptorProto(
         )
       }
 
-      override fun redact(value: EnumDescriptorProto): EnumDescriptorProto? = value.copy(
-        value = value.value.also { Internal.redactElements(it, EnumValueDescriptorProto.ADAPTER) },
+      override fun redact(value: EnumDescriptorProto): EnumDescriptorProto = value.copy(
+        value = value.value.redactElements(EnumValueDescriptorProto.ADAPTER),
         options = value.options?.let(EnumOptions.ADAPTER::redact),
-        reserved_range = value.reserved_range.also { Internal.redactElements(it,
-            EnumReservedRange.ADAPTER) },
+        reserved_range = value.reserved_range.redactElements(EnumReservedRange.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }
@@ -192,13 +213,21 @@ data class EnumDescriptorProto(
     /**
      * Inclusive.
      */
-    @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField val start:
-        Int? = null,
+    @field:WireField(
+      tag = 1,
+      adapter = "com.squareup.wire.ProtoAdapter#INT32"
+    )
+    @JvmField
+    val start: Int? = null,
     /**
      * Inclusive.
      */
-    @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField val end:
-        Int? = null,
+    @field:WireField(
+      tag = 2,
+      adapter = "com.squareup.wire.ProtoAdapter#INT32"
+    )
+    @JvmField
+    val end: Int? = null,
     val unknownFields: ByteString = ByteString.EMPTY
   ) : AndroidMessage<EnumReservedRange, EnumReservedRange.Builder>(ADAPTER, unknownFields) {
     override fun newBuilder(): Builder {
@@ -243,7 +272,7 @@ data class EnumDescriptorProto(
       @JvmField
       val ADAPTER: ProtoAdapter<EnumReservedRange> = object : ProtoAdapter<EnumReservedRange>(
         FieldEncoding.LENGTH_DELIMITED, 
-        EnumReservedRange::class.java
+        EnumReservedRange::class
       ) {
         override fun encodedSize(value: EnumReservedRange): Int = 
           ProtoAdapter.INT32.encodedSizeWithTag(1, value.start) +
@@ -263,7 +292,7 @@ data class EnumDescriptorProto(
             when (tag) {
               1 -> start = ProtoAdapter.INT32.decode(reader)
               2 -> end = ProtoAdapter.INT32.decode(reader)
-              else -> TagHandler.UNKNOWN_TAG
+              else -> reader.readUnknownField(tag)
             }
           }
           return EnumReservedRange(
@@ -273,7 +302,7 @@ data class EnumDescriptorProto(
           )
         }
 
-        override fun redact(value: EnumReservedRange): EnumReservedRange? = value.copy(
+        override fun redact(value: EnumReservedRange): EnumReservedRange = value.copy(
           unknownFields = ByteString.EMPTY
         )
       }

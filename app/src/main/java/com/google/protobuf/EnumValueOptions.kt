@@ -9,9 +9,9 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.collections.List
@@ -25,13 +25,22 @@ data class EnumValueOptions(
    * for the enum value, or it will be completely ignored; in the very least,
    * this is a formalization for deprecating enum values.
    */
-  @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-      val deprecated: Boolean? = false,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val deprecated: Boolean? = false,
   /**
    * The parser stores options it doesn't recognize here. See above.
    */
-  @field:WireField(tag = 999, adapter = "com.google.protobuf.UninterpretedOption#ADAPTER") @JvmField
-      val uninterpreted_option: List<UninterpretedOption> = emptyList(),
+  @field:WireField(
+    tag = 999,
+    adapter = "com.google.protobuf.UninterpretedOption#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val uninterpreted_option: List<UninterpretedOption> = emptyList(),
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<EnumValueOptions, EnumValueOptions.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -64,7 +73,7 @@ data class EnumValueOptions(
      * The parser stores options it doesn't recognize here. See above.
      */
     fun uninterpreted_option(uninterpreted_option: List<UninterpretedOption>): Builder {
-      Internal.checkElementsNotNull(uninterpreted_option)
+      checkElementsNotNull(uninterpreted_option)
       this.uninterpreted_option = uninterpreted_option
       return this
     }
@@ -80,7 +89,7 @@ data class EnumValueOptions(
     @JvmField
     val ADAPTER: ProtoAdapter<EnumValueOptions> = object : ProtoAdapter<EnumValueOptions>(
       FieldEncoding.LENGTH_DELIMITED, 
-      EnumValueOptions::class.java
+      EnumValueOptions::class
     ) {
       override fun encodedSize(value: EnumValueOptions): Int = 
         ProtoAdapter.BOOL.encodedSizeWithTag(1, value.deprecated) +
@@ -102,7 +111,7 @@ data class EnumValueOptions(
           when (tag) {
             1 -> deprecated = ProtoAdapter.BOOL.decode(reader)
             999 -> uninterpreted_option.add(UninterpretedOption.ADAPTER.decode(reader))
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return EnumValueOptions(
@@ -112,9 +121,9 @@ data class EnumValueOptions(
         )
       }
 
-      override fun redact(value: EnumValueOptions): EnumValueOptions? = value.copy(
-        uninterpreted_option = value.uninterpreted_option.also { Internal.redactElements(it,
-            UninterpretedOption.ADAPTER) },
+      override fun redact(value: EnumValueOptions): EnumValueOptions = value.copy(
+        uninterpreted_option =
+            value.uninterpreted_option.redactElements(UninterpretedOption.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }

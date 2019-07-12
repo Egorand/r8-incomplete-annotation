@@ -10,10 +10,11 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireEnum
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.missingRequiredFields
+import com.squareup.wire.internal.redactElements
 import kotlin.Int
 import kotlin.String
 import kotlin.collections.List
@@ -25,22 +26,42 @@ data class Person(
   /**
    * The customer's full name.
    */
-  @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField val name:
-      String,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING",
+    label = WireField.Label.REQUIRED
+  )
+  @JvmField
+  val name: String,
   /**
    * The customer's ID number.
    */
-  @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField val id: Int,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.squareup.wire.ProtoAdapter#INT32",
+    label = WireField.Label.REQUIRED
+  )
+  @JvmField
+  val id: Int,
   /**
    * Email address for the customer.
    */
-  @field:WireField(tag = 3, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField val email:
-      String? = null,
+  @field:WireField(
+    tag = 3,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val email: String? = null,
   /**
    * A list of the customer's phone numbers.
    */
-  @field:WireField(tag = 4, adapter = "com.squareup.wire.protos.person.Person${'$'}PhoneNumber#ADAPTER")
-      @JvmField val phone: List<PhoneNumber> = emptyList(),
+  @field:WireField(
+    tag = 4,
+    adapter = "com.squareup.wire.protos.person.Person${'$'}PhoneNumber#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val phone: List<PhoneNumber> = emptyList(),
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<Person, Person.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -94,14 +115,14 @@ data class Person(
      * A list of the customer's phone numbers.
      */
     fun phone(phone: List<PhoneNumber>): Builder {
-      Internal.checkElementsNotNull(phone)
+      checkElementsNotNull(phone)
       this.phone = phone
       return this
     }
 
     override fun build(): Person = Person(
-      name = name ?: throw Internal.missingRequiredFields(name, "name"),
-      id = id ?: throw Internal.missingRequiredFields(id, "id"),
+      name = name ?: throw missingRequiredFields(name, "name"),
+      id = id ?: throw missingRequiredFields(id, "id"),
       email = email,
       phone = phone,
       unknownFields = buildUnknownFields()
@@ -112,7 +133,7 @@ data class Person(
     @JvmField
     val ADAPTER: ProtoAdapter<Person> = object : ProtoAdapter<Person>(
       FieldEncoding.LENGTH_DELIMITED, 
-      Person::class.java
+      Person::class
     ) {
       override fun encodedSize(value: Person): Int = 
         ProtoAdapter.STRING.encodedSizeWithTag(1, value.name) +
@@ -140,20 +161,20 @@ data class Person(
             2 -> id = ProtoAdapter.INT32.decode(reader)
             3 -> email = ProtoAdapter.STRING.decode(reader)
             4 -> phone.add(PhoneNumber.ADAPTER.decode(reader))
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return Person(
-          name = name ?: throw Internal.missingRequiredFields(name, "name"),
-          id = id ?: throw Internal.missingRequiredFields(id, "id"),
+          name = name ?: throw missingRequiredFields(name, "name"),
+          id = id ?: throw missingRequiredFields(id, "id"),
           email = email,
           phone = phone,
           unknownFields = unknownFields
         )
       }
 
-      override fun redact(value: Person): Person? = value.copy(
-        phone = value.phone.also { Internal.redactElements(it, PhoneNumber.ADAPTER) },
+      override fun redact(value: Person): Person = value.copy(
+        phone = value.phone.redactElements(PhoneNumber.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }
@@ -162,7 +183,9 @@ data class Person(
     val CREATOR: Parcelable.Creator<Person> = AndroidMessage.newCreator(ADAPTER)
   }
 
-  enum class PhoneType(private val value: Int) : WireEnum {
+  enum class PhoneType(
+    override val value: Int
+  ) : WireEnum {
     MOBILE(0),
 
     HOME(1),
@@ -172,12 +195,10 @@ data class Person(
      */
     WORK(2);
 
-    override fun getValue(): Int = value
-
     companion object {
       @JvmField
       val ADAPTER: ProtoAdapter<PhoneType> = object : EnumAdapter<PhoneType>(
-        PhoneType::class.java
+        PhoneType::class
       ) {
         override fun fromValue(value: Int): PhoneType = PhoneType.fromValue(value)
       }
@@ -196,13 +217,22 @@ data class Person(
     /**
      * The customer's phone number.
      */
-    @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-        val number: String,
+    @field:WireField(
+      tag = 1,
+      adapter = "com.squareup.wire.ProtoAdapter#STRING",
+      label = WireField.Label.REQUIRED
+    )
+    @JvmField
+    val number: String,
     /**
      * The type of phone stored here.
      */
-    @field:WireField(tag = 2, adapter = "com.squareup.wire.protos.person.Person${'$'}PhoneType#ADAPTER")
-        @JvmField val type: PhoneType? = PhoneType.HOME,
+    @field:WireField(
+      tag = 2,
+      adapter = "com.squareup.wire.protos.person.Person${'$'}PhoneType#ADAPTER"
+    )
+    @JvmField
+    val type: PhoneType? = PhoneType.HOME,
     val unknownFields: ByteString = ByteString.EMPTY
   ) : AndroidMessage<PhoneNumber, PhoneNumber.Builder>(ADAPTER, unknownFields) {
     override fun newBuilder(): Builder {
@@ -237,7 +267,7 @@ data class Person(
       }
 
       override fun build(): PhoneNumber = PhoneNumber(
-        number = number ?: throw Internal.missingRequiredFields(number, "number"),
+        number = number ?: throw missingRequiredFields(number, "number"),
         type = type,
         unknownFields = buildUnknownFields()
       )
@@ -247,7 +277,7 @@ data class Person(
       @JvmField
       val ADAPTER: ProtoAdapter<PhoneNumber> = object : ProtoAdapter<PhoneNumber>(
         FieldEncoding.LENGTH_DELIMITED, 
-        PhoneNumber::class.java
+        PhoneNumber::class
       ) {
         override fun encodedSize(value: PhoneNumber): Int = 
           ProtoAdapter.STRING.encodedSizeWithTag(1, value.number) +
@@ -267,17 +297,17 @@ data class Person(
             when (tag) {
               1 -> number = ProtoAdapter.STRING.decode(reader)
               2 -> type = PhoneType.ADAPTER.decode(reader)
-              else -> TagHandler.UNKNOWN_TAG
+              else -> reader.readUnknownField(tag)
             }
           }
           return PhoneNumber(
-            number = number ?: throw Internal.missingRequiredFields(number, "number"),
+            number = number ?: throw missingRequiredFields(number, "number"),
             type = type,
             unknownFields = unknownFields
           )
         }
 
-        override fun redact(value: PhoneNumber): PhoneNumber? = value.copy(
+        override fun redact(value: PhoneNumber): PhoneNumber = value.copy(
           unknownFields = ByteString.EMPTY
         )
       }

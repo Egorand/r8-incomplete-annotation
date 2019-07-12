@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
@@ -22,16 +24,19 @@ android {
 }
 
 configurations {
-    wire
+    wire.with {
+        def platformAttr = Attribute.of('org.jetbrains.kotlin.platform.type', KotlinPlatformType.class)
+        attributes.attribute(platformAttr, KotlinPlatformType.jvm)
+    }
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.squareup.wire:wire-runtime:3.0.0-alpha01'
-    implementation 'com.squareup.wire:wire-gson-support:2.2.0'
-    wire 'com.squareup.wire:wire-compiler:3.0.0-alpha01'
+    implementation 'com.squareup.wire:wire-runtime:3.0.0-alpha03'
+    implementation 'com.squareup.wire:wire-gson-support:3.0.0-alpha03'
+    wire 'com.squareup.wire:wire-compiler:3.0.0-alpha03'
 }
 
 tasks.register("generateProtos", JavaExec) {

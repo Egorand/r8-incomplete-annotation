@@ -9,9 +9,9 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Int
 import kotlin.String
 import kotlin.collections.List
@@ -22,12 +22,25 @@ import okio.ByteString
  * Describes a service.
  */
 data class ServiceDescriptorProto(
-  @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField val name:
-      String? = null,
-  @field:WireField(tag = 2, adapter = "com.google.protobuf.MethodDescriptorProto#ADAPTER") @JvmField
-      val method: List<MethodDescriptorProto> = emptyList(),
-  @field:WireField(tag = 3, adapter = "com.google.protobuf.ServiceOptions#ADAPTER") @JvmField
-      val options: ServiceOptions? = null,
+  @field:WireField(
+    tag = 1,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
+  )
+  @JvmField
+  val name: String? = null,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.google.protobuf.MethodDescriptorProto#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val method: List<MethodDescriptorProto> = emptyList(),
+  @field:WireField(
+    tag = 3,
+    adapter = "com.google.protobuf.ServiceOptions#ADAPTER"
+  )
+  @JvmField
+  val options: ServiceOptions? = null,
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<ServiceDescriptorProto, ServiceDescriptorProto.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -55,7 +68,7 @@ data class ServiceDescriptorProto(
     }
 
     fun method(method: List<MethodDescriptorProto>): Builder {
-      Internal.checkElementsNotNull(method)
+      checkElementsNotNull(method)
       this.method = method
       return this
     }
@@ -78,7 +91,7 @@ data class ServiceDescriptorProto(
     val ADAPTER: ProtoAdapter<ServiceDescriptorProto> = object :
         ProtoAdapter<ServiceDescriptorProto>(
       FieldEncoding.LENGTH_DELIMITED, 
-      ServiceDescriptorProto::class.java
+      ServiceDescriptorProto::class
     ) {
       override fun encodedSize(value: ServiceDescriptorProto): Int = 
         ProtoAdapter.STRING.encodedSizeWithTag(1, value.name) +
@@ -102,7 +115,7 @@ data class ServiceDescriptorProto(
             1 -> name = ProtoAdapter.STRING.decode(reader)
             2 -> method.add(MethodDescriptorProto.ADAPTER.decode(reader))
             3 -> options = ServiceOptions.ADAPTER.decode(reader)
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return ServiceDescriptorProto(
@@ -113,8 +126,8 @@ data class ServiceDescriptorProto(
         )
       }
 
-      override fun redact(value: ServiceDescriptorProto): ServiceDescriptorProto? = value.copy(
-        method = value.method.also { Internal.redactElements(it, MethodDescriptorProto.ADAPTER) },
+      override fun redact(value: ServiceDescriptorProto): ServiceDescriptorProto = value.copy(
+        method = value.method.redactElements(MethodDescriptorProto.ADAPTER),
         options = value.options?.let(ServiceOptions.ADAPTER::redact),
         unknownFields = ByteString.EMPTY
       )

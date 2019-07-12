@@ -9,9 +9,9 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Int
 import kotlin.String
 import kotlin.collections.List
@@ -70,8 +70,13 @@ data class SourceCodeInfo(
    *   ignore those that it doesn't understand, as more types of locations could
    *   be recorded in the future.
    */
-  @field:WireField(tag = 1, adapter = "com.google.protobuf.SourceCodeInfo.Location#ADAPTER")
-      @JvmField val location: List<Location> = emptyList(),
+  @field:WireField(
+    tag = 1,
+    adapter = "com.google.protobuf.SourceCodeInfo${'$'}Location#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val location: List<Location> = emptyList(),
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<SourceCodeInfo, SourceCodeInfo.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -131,7 +136,7 @@ data class SourceCodeInfo(
      *   be recorded in the future.
      */
     fun location(location: List<Location>): Builder {
-      Internal.checkElementsNotNull(location)
+      checkElementsNotNull(location)
       this.location = location
       return this
     }
@@ -146,7 +151,7 @@ data class SourceCodeInfo(
     @JvmField
     val ADAPTER: ProtoAdapter<SourceCodeInfo> = object : ProtoAdapter<SourceCodeInfo>(
       FieldEncoding.LENGTH_DELIMITED, 
-      SourceCodeInfo::class.java
+      SourceCodeInfo::class
     ) {
       override fun encodedSize(value: SourceCodeInfo): Int = 
         Location.ADAPTER.asRepeated().encodedSizeWithTag(1, value.location) +
@@ -162,7 +167,7 @@ data class SourceCodeInfo(
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
             1 -> location.add(Location.ADAPTER.decode(reader))
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return SourceCodeInfo(
@@ -171,8 +176,8 @@ data class SourceCodeInfo(
         )
       }
 
-      override fun redact(value: SourceCodeInfo): SourceCodeInfo? = value.copy(
-        location = value.location.also { Internal.redactElements(it, Location.ADAPTER) },
+      override fun redact(value: SourceCodeInfo): SourceCodeInfo = value.copy(
+        location = value.location.redactElements(Location.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }
@@ -207,8 +212,13 @@ data class SourceCodeInfo(
      * this path refers to the whole field declaration (from the beginning
      * of the label to the terminating semicolon).
      */
-    @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField val path:
-        List<Int> = emptyList(),
+    @field:WireField(
+      tag = 1,
+      adapter = "com.squareup.wire.ProtoAdapter#INT32",
+      label = WireField.Label.PACKED
+    )
+    @JvmField
+    val path: List<Int> = emptyList(),
     /**
      * Always has exactly three or four elements: start line, start column,
      * end line (optional, otherwise assumed same as start line), end column.
@@ -216,8 +226,13 @@ data class SourceCodeInfo(
      * and column numbers are zero-based -- typically you will want to add
      * 1 to each before displaying to a user.
      */
-    @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField val span:
-        List<Int> = emptyList(),
+    @field:WireField(
+      tag = 2,
+      adapter = "com.squareup.wire.ProtoAdapter#INT32",
+      label = WireField.Label.PACKED
+    )
+    @JvmField
+    val span: List<Int> = emptyList(),
     /**
      * If this SourceCodeInfo represents a complete declaration, these are any
      * comments appearing before and after the declaration which appear to be
@@ -267,12 +282,25 @@ data class SourceCodeInfo(
      *
      *   // ignored detached comments.
      */
-    @field:WireField(tag = 3, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-        val leading_comments: String? = null,
-    @field:WireField(tag = 4, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-        val trailing_comments: String? = null,
-    @field:WireField(tag = 6, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-        val leading_detached_comments: List<String> = emptyList(),
+    @field:WireField(
+      tag = 3,
+      adapter = "com.squareup.wire.ProtoAdapter#STRING"
+    )
+    @JvmField
+    val leading_comments: String? = null,
+    @field:WireField(
+      tag = 4,
+      adapter = "com.squareup.wire.ProtoAdapter#STRING"
+    )
+    @JvmField
+    val trailing_comments: String? = null,
+    @field:WireField(
+      tag = 6,
+      adapter = "com.squareup.wire.ProtoAdapter#STRING",
+      label = WireField.Label.REPEATED
+    )
+    @JvmField
+    val leading_detached_comments: List<String> = emptyList(),
     val unknownFields: ByteString = ByteString.EMPTY
   ) : AndroidMessage<Location, Location.Builder>(ADAPTER, unknownFields) {
     override fun newBuilder(): Builder {
@@ -328,7 +356,7 @@ data class SourceCodeInfo(
        * of the label to the terminating semicolon).
        */
       fun path(path: List<Int>): Builder {
-        Internal.checkElementsNotNull(path)
+        checkElementsNotNull(path)
         this.path = path
         return this
       }
@@ -341,7 +369,7 @@ data class SourceCodeInfo(
        * 1 to each before displaying to a user.
        */
       fun span(span: List<Int>): Builder {
-        Internal.checkElementsNotNull(span)
+        checkElementsNotNull(span)
         this.span = span
         return this
       }
@@ -406,7 +434,7 @@ data class SourceCodeInfo(
       }
 
       fun leading_detached_comments(leading_detached_comments: List<String>): Builder {
-        Internal.checkElementsNotNull(leading_detached_comments)
+        checkElementsNotNull(leading_detached_comments)
         this.leading_detached_comments = leading_detached_comments
         return this
       }
@@ -425,7 +453,7 @@ data class SourceCodeInfo(
       @JvmField
       val ADAPTER: ProtoAdapter<Location> = object : ProtoAdapter<Location>(
         FieldEncoding.LENGTH_DELIMITED, 
-        Location::class.java
+        Location::class
       ) {
         override fun encodedSize(value: Location): Int = 
           ProtoAdapter.INT32.asRepeated().encodedSizeWithTag(1, value.path) +
@@ -457,7 +485,7 @@ data class SourceCodeInfo(
               3 -> leading_comments = ProtoAdapter.STRING.decode(reader)
               4 -> trailing_comments = ProtoAdapter.STRING.decode(reader)
               6 -> leading_detached_comments.add(ProtoAdapter.STRING.decode(reader))
-              else -> TagHandler.UNKNOWN_TAG
+              else -> reader.readUnknownField(tag)
             }
           }
           return Location(
@@ -470,7 +498,7 @@ data class SourceCodeInfo(
           )
         }
 
-        override fun redact(value: Location): Location? = value.copy(
+        override fun redact(value: Location): Location = value.copy(
           unknownFields = ByteString.EMPTY
         )
       }

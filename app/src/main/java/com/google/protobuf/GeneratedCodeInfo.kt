@@ -9,9 +9,9 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Int
 import kotlin.String
 import kotlin.collections.List
@@ -28,8 +28,13 @@ data class GeneratedCodeInfo(
    * An Annotation connects some span of text in generated code to an element
    * of its generating .proto file.
    */
-  @field:WireField(tag = 1, adapter = "com.google.protobuf.GeneratedCodeInfo.Annotation#ADAPTER")
-      @JvmField val annotation: List<Annotation> = emptyList(),
+  @field:WireField(
+    tag = 1,
+    adapter = "com.google.protobuf.GeneratedCodeInfo${'$'}Annotation#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val annotation: List<Annotation> = emptyList(),
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<GeneratedCodeInfo, GeneratedCodeInfo.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -48,7 +53,7 @@ data class GeneratedCodeInfo(
      * of its generating .proto file.
      */
     fun annotation(annotation: List<Annotation>): Builder {
-      Internal.checkElementsNotNull(annotation)
+      checkElementsNotNull(annotation)
       this.annotation = annotation
       return this
     }
@@ -63,7 +68,7 @@ data class GeneratedCodeInfo(
     @JvmField
     val ADAPTER: ProtoAdapter<GeneratedCodeInfo> = object : ProtoAdapter<GeneratedCodeInfo>(
       FieldEncoding.LENGTH_DELIMITED, 
-      GeneratedCodeInfo::class.java
+      GeneratedCodeInfo::class
     ) {
       override fun encodedSize(value: GeneratedCodeInfo): Int = 
         Annotation.ADAPTER.asRepeated().encodedSizeWithTag(1, value.annotation) +
@@ -79,7 +84,7 @@ data class GeneratedCodeInfo(
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
             1 -> annotation.add(Annotation.ADAPTER.decode(reader))
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return GeneratedCodeInfo(
@@ -88,8 +93,8 @@ data class GeneratedCodeInfo(
         )
       }
 
-      override fun redact(value: GeneratedCodeInfo): GeneratedCodeInfo? = value.copy(
-        annotation = value.annotation.also { Internal.redactElements(it, Annotation.ADAPTER) },
+      override fun redact(value: GeneratedCodeInfo): GeneratedCodeInfo = value.copy(
+        annotation = value.annotation.redactElements(Annotation.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }
@@ -103,26 +108,43 @@ data class GeneratedCodeInfo(
      * Identifies the element in the original source .proto file. This field
      * is formatted the same as SourceCodeInfo.Location.path.
      */
-    @field:WireField(tag = 1, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField val path:
-        List<Int> = emptyList(),
+    @field:WireField(
+      tag = 1,
+      adapter = "com.squareup.wire.ProtoAdapter#INT32",
+      label = WireField.Label.PACKED
+    )
+    @JvmField
+    val path: List<Int> = emptyList(),
     /**
      * Identifies the filesystem path to the original source .proto.
      */
-    @field:WireField(tag = 2, adapter = "com.squareup.wire.ProtoAdapter#STRING") @JvmField
-        val source_file: String? = null,
+    @field:WireField(
+      tag = 2,
+      adapter = "com.squareup.wire.ProtoAdapter#STRING"
+    )
+    @JvmField
+    val source_file: String? = null,
     /**
      * Identifies the starting offset in bytes in the generated code
      * that relates to the identified object.
      */
-    @field:WireField(tag = 3, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField val begin:
-        Int? = null,
+    @field:WireField(
+      tag = 3,
+      adapter = "com.squareup.wire.ProtoAdapter#INT32"
+    )
+    @JvmField
+    val begin: Int? = null,
     /**
      * Identifies the ending offset in bytes in the generated code that
      * relates to the identified offset. The end offset should be one past
      * the last relevant byte (so the length of the text = end - begin).
      */
-    @field:WireField(tag = 4, adapter = "com.squareup.wire.ProtoAdapter#INT32") @JvmField val end:
-        Int? = null,
+    @field:WireField(
+      tag = 4,
+      adapter = "com.squareup.wire.ProtoAdapter#INT32"
+    )
+    @JvmField
+    val end: Int? = null,
     val unknownFields: ByteString = ByteString.EMPTY
   ) : AndroidMessage<Annotation, Annotation.Builder>(ADAPTER, unknownFields) {
     override fun newBuilder(): Builder {
@@ -153,7 +175,7 @@ data class GeneratedCodeInfo(
        * is formatted the same as SourceCodeInfo.Location.path.
        */
       fun path(path: List<Int>): Builder {
-        Internal.checkElementsNotNull(path)
+        checkElementsNotNull(path)
         this.path = path
         return this
       }
@@ -198,7 +220,7 @@ data class GeneratedCodeInfo(
       @JvmField
       val ADAPTER: ProtoAdapter<Annotation> = object : ProtoAdapter<Annotation>(
         FieldEncoding.LENGTH_DELIMITED, 
-        Annotation::class.java
+        Annotation::class
       ) {
         override fun encodedSize(value: Annotation): Int = 
           ProtoAdapter.INT32.asRepeated().encodedSizeWithTag(1, value.path) +
@@ -226,7 +248,7 @@ data class GeneratedCodeInfo(
               2 -> source_file = ProtoAdapter.STRING.decode(reader)
               3 -> begin = ProtoAdapter.INT32.decode(reader)
               4 -> end = ProtoAdapter.INT32.decode(reader)
-              else -> TagHandler.UNKNOWN_TAG
+              else -> reader.readUnknownField(tag)
             }
           }
           return Annotation(
@@ -238,7 +260,7 @@ data class GeneratedCodeInfo(
           )
         }
 
-        override fun redact(value: Annotation): Annotation? = value.copy(
+        override fun redact(value: Annotation): Annotation = value.copy(
           unknownFields = ByteString.EMPTY
         )
       }

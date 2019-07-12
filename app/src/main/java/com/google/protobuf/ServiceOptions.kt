@@ -9,9 +9,9 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
-import com.squareup.wire.TagHandler
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.Internal
+import com.squareup.wire.internal.checkElementsNotNull
+import com.squareup.wire.internal.redactElements
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.collections.List
@@ -29,13 +29,22 @@ data class ServiceOptions(
    * for the service, or it will be completely ignored; in the very least,
    * this is a formalization for deprecating services.
    */
-  @field:WireField(tag = 33, adapter = "com.squareup.wire.ProtoAdapter#BOOL") @JvmField
-      val deprecated: Boolean? = false,
+  @field:WireField(
+    tag = 33,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL"
+  )
+  @JvmField
+  val deprecated: Boolean? = false,
   /**
    * The parser stores options it doesn't recognize here. See above.
    */
-  @field:WireField(tag = 999, adapter = "com.google.protobuf.UninterpretedOption#ADAPTER") @JvmField
-      val uninterpreted_option: List<UninterpretedOption> = emptyList(),
+  @field:WireField(
+    tag = 999,
+    adapter = "com.google.protobuf.UninterpretedOption#ADAPTER",
+    label = WireField.Label.REPEATED
+  )
+  @JvmField
+  val uninterpreted_option: List<UninterpretedOption> = emptyList(),
   val unknownFields: ByteString = ByteString.EMPTY
 ) : AndroidMessage<ServiceOptions, ServiceOptions.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -72,7 +81,7 @@ data class ServiceOptions(
      * The parser stores options it doesn't recognize here. See above.
      */
     fun uninterpreted_option(uninterpreted_option: List<UninterpretedOption>): Builder {
-      Internal.checkElementsNotNull(uninterpreted_option)
+      checkElementsNotNull(uninterpreted_option)
       this.uninterpreted_option = uninterpreted_option
       return this
     }
@@ -88,7 +97,7 @@ data class ServiceOptions(
     @JvmField
     val ADAPTER: ProtoAdapter<ServiceOptions> = object : ProtoAdapter<ServiceOptions>(
       FieldEncoding.LENGTH_DELIMITED, 
-      ServiceOptions::class.java
+      ServiceOptions::class
     ) {
       override fun encodedSize(value: ServiceOptions): Int = 
         ProtoAdapter.BOOL.encodedSizeWithTag(33, value.deprecated) +
@@ -110,7 +119,7 @@ data class ServiceOptions(
           when (tag) {
             33 -> deprecated = ProtoAdapter.BOOL.decode(reader)
             999 -> uninterpreted_option.add(UninterpretedOption.ADAPTER.decode(reader))
-            else -> TagHandler.UNKNOWN_TAG
+            else -> reader.readUnknownField(tag)
           }
         }
         return ServiceOptions(
@@ -120,9 +129,9 @@ data class ServiceOptions(
         )
       }
 
-      override fun redact(value: ServiceOptions): ServiceOptions? = value.copy(
-        uninterpreted_option = value.uninterpreted_option.also { Internal.redactElements(it,
-            UninterpretedOption.ADAPTER) },
+      override fun redact(value: ServiceOptions): ServiceOptions = value.copy(
+        uninterpreted_option =
+            value.uninterpreted_option.redactElements(UninterpretedOption.ADAPTER),
         unknownFields = ByteString.EMPTY
       )
     }
